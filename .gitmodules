@@ -1,9 +1,6 @@
-
 [submodule "FRONTEND"]
 	path = FRONTEND
 	url = https://github.com/manishraj27/Gitdrape-frontend
-
 [submodule "BACKEND"]
     path = BACKEND
     url = https://github.com/manishraj27/Gitdrape-backend
-    
