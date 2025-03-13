@@ -1,0 +1,52 @@
+name: Update Submodules
+
+on:
+  push:
+    branches:
+      - main
+  repository_dispatch:
+    types: [submodule-update]
+
+jobs:
+  update-submodules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository with Submodules
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          token: ${{ secrets.PAT_TOKEN }}  # Reference the PAT_TOKEN secret
+
+      - name: Configure Git User
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Update Submodules
+        run: |
+          git submodule init
+          git submodule update
+
+          git submodule foreach '
+            git fetch origin
+            BRANCH=$(git rev-parse --abbrev-ref HEAD)
+            git merge -X ours --no-edit origin/$BRANCH || {
+              git merge --abort
+              git reset --hard origin/$BRANCH
+            }
+            git add -A
+          '
+
+      - name: Pull Latest Changes
+        run: |
+          # Pull the latest changes from the remote to avoid conflicts
+          git pull origin main --rebase
+
+      - name: Commit and Push Updates
+        run: |
+          git add .
+          git diff --staged --quiet || git commit -m "Update submodule references [skip ci]"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
